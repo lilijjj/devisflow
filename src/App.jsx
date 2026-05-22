@@ -152,7 +152,7 @@ function AuthPage({onLogin}){
   return(
     <div style={{minHeight:"100vh",display:"flex",background:"#F0F4FF",fontFamily:"'DM Sans',sans-serif"}}>
       {/* Left */}
-      <div style={{flex:"0 0 420px",background:"#0F172A",display:"flex",flexDirection:"column",
+      <div className="auth-left" style={{flex:"0 0 420px",background:"#0F172A",display:"flex",flexDirection:"column",
         padding:"40px 44px",color:"#fff",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:-80,right:-80,width:260,height:260,borderRadius:"50%",background:"rgba(37,99,235,.15)"}}/>
         <div style={{position:"absolute",bottom:40,left:-60,width:200,height:200,borderRadius:"50%",background:"rgba(124,58,237,.1)"}}/>
@@ -186,7 +186,7 @@ function AuthPage({onLogin}){
       </div>
 
       {/* Right */}
-      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:40}}>
+      <div className="auth-right" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:40}}>
         <div style={{width:"100%",maxWidth:420}}>
           <h3 style={{fontSize:22,fontWeight:700,letterSpacing:"-0.4px",margin:"0 0 4px",color:T.text}}>
             {mode==="login"?"Bon retour 👋":"Créer votre compte 🚀"}
@@ -374,7 +374,7 @@ function Tarifs({user, onPlanChange}){
         </span>
       </div>
 
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,maxWidth:860,margin:"0 auto"}}>
+      <div className="plans-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,maxWidth:860,margin:"0 auto"}}>
         {plans.map(p=>{
           const isCurrent = activePlan===p.id;
           return(
@@ -432,7 +432,7 @@ function Dashboard({devis,totalSigne,enCours,tauxSign}){
   const max=Math.max(...MONTHS.map(m=>m[1]));
   return(
     <div style={{animation:"fadeUp .3s ease"}}>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+      <div className="kpi-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
         {[
           {l:"CA signé ce mois",v:fmt(totalSigne),i:"ti-trending-up",c:T.green,bg:T.greenLight},
           {l:"Devis en cours",v:enCours,i:"ti-file-time",c:T.blue,bg:T.blueLight},
@@ -453,7 +453,7 @@ function Dashboard({devis,totalSigne,enCours,tauxSign}){
           </Card>
         ))}
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1.5fr",gap:16}}>
+      <div className="chart-grid" style={{display:"grid",gridTemplateColumns:"1fr 1.5fr",gap:16}}>
         <Card style={{padding:20}}>
           <div style={{fontWeight:600,fontSize:13,marginBottom:14}}>CA mensuel</div>
           <div style={{display:"flex",alignItems:"flex-end",gap:8,height:100}}>
@@ -881,7 +881,7 @@ function AppShell({user,onLogout}){
           )}
         </div>
 
-        <div style={{padding:28,flex:1}}>
+        <div className="page-content" style={{padding:28,flex:1}}>
           {page==="dashboard"&&!newOpen&&<Dashboard devis={devis} totalSigne={totalSigne} enCours={enCours} tauxSign={tauxSign}/>}
           {page==="devis"&&!newOpen&&<DevisList devis={devis} toast={toast}/>}
           {page==="devis"&&newOpen&&<NewDevisWizard
@@ -900,7 +900,50 @@ function AppShell({user,onLogout}){
         @keyframes pulse{0%,100%{opacity:.3;transform:scale(.85)}50%{opacity:1;transform:scale(1)}}
         *{box-sizing:border-box}
         ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-thumb{background:${T.border};border-radius:2px}
+
+        /* ── MOBILE ── */
+        @media(max-width:768px){
+          /* Cache la sidebar, affiche la nav en bas */
+          aside { display:none !important; }
+          .mobile-nav {
+            display:flex !important;
+            position:fixed;bottom:0;left:0;right:0;
+            background:#fff;border-top:1px solid ${T.border};
+            z-index:100;padding:6px 0 10px;
+            box-shadow:0 -2px 12px rgba(0,0,0,.06);
+          }
+          main { padding-bottom:80px !important; }
+          .topbar-title { font-size:17px !important; }
+          .page-content { padding:16px !important; }
+          /* KPIs en 2 colonnes */
+          .kpi-grid { grid-template-columns:1fr 1fr !important; gap:8px !important; }
+          /* Charts en colonne */
+          .chart-grid { grid-template-columns:1fr !important; }
+          /* Tables scrollables */
+          .table-wrap { overflow-x:auto !important; }
+          /* Auth page en colonne */
+          .auth-left { display:none !important; }
+          .auth-right { padding:24px !important; }
+          /* Tarifs en colonne */
+          .plans-grid { grid-template-columns:1fr !important; }
+          /* Wizard form en colonne */
+          .form-2col { grid-template-columns:1fr !important; }
+        }
       `}</style>
+
+      {/* Mobile bottom nav */}
+      <div className="mobile-nav" style={{display:"none"}}>
+        {NAV.map(n=>(
+          <button key={n.id} onClick={()=>{setPage(n.id);setNewOpen(false);}}
+            style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,
+              background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",
+              color:page===n.id?T.blue:T.textTer,padding:"4px 0",
+            }}>
+            <i className={`ti ${n.icon}`} style={{fontSize:20}}/>
+            <span style={{fontSize:9,fontWeight:page===n.id?600:400}}>{n.label}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
