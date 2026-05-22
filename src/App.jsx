@@ -1,13 +1,15 @@
+import { createClient } from "@supabase/supabase-js";
 import { useState, useEffect, useCallback } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 
-/* ─────────────────────────────────────────
-   CONFIG  — à mettre dans .env.local
-   REACT_APP_API_URL=http://localhost:4242
-   REACT_APP_STRIPE_PK=pk_test_XXXX
-───────────────────────────────────────── */
-const API     = process.env.REACT_APP_API_URL    || "http://localhost:4242";
-const STRIPE_PK = process.env.REACT_APP_STRIPE_PK || "pk_test_VOTRE_CLE_PUBLISHABLE";
+/* ─── Supabase client ───────────────────── */
+const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_URL,
+  process.env.REACT_APP_SUPABASE_ANON_KEY
+);
+
+const API = process.env.REACT_APP_API_URL || "http://localhost:4242";
+const STRIPE_PK = process.env.REACT_APP_STRIPE_PK || "pk_test_VOTRE_CLE";
 const stripePromise = loadStripe(STRIPE_PK);
 
 /* ─── MOCK DB local (avant vrai backend) ── */
@@ -136,15 +138,33 @@ function AuthPage({onLogin}){
   async function submit(){
     const e=validate(); if(Object.keys(e).length){setErr(e);return;}
     setErr({}); setLoad(true);
-    await new Promise(r=>setTimeout(r,800));
-    if(mode==="login"){
-      const u=MOCK_USERS.find(u=>u.email===email&&u.password===pass);
-      u ? onLogin(u) : setErr({global:"Email ou mot de passe incorrect"});
-    } else {
-      const u={id:`user_${Date.now()}`,email,password:pass,name,
-        company:company||"Mon entreprise",plan:"trial",
-        avatar:name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()||"U"};
-      MOCK_USERS.push(u); onLogin(u);
+
+    // ── Compte démo (pas Supabase) ──
+    if(email==="demo@devisflow.fr"&&pass==="demo1234"){
+      onLogin(MOCK_USERS[0]); setLoad(false); return;
+    }
+
+    try {
+      if(mode==="login"){
+        // Connexion Supabase Auth
+        const {data,error} = await supabase.auth.signInWithPassword({email,password:pass});
+        if(error) throw new Error("Email ou mot de passe incorrect");
+        // Récupère le profil dans la table users
+        const {data:profile} = await supabase.from("users").select("*").eq("id",data.user.id).single();
+        const u = profile || {id:data.user.id,email,name:email.split("@")[0],plan:"trial",avatar:email[0].toUpperCase()};
+        onLogin({...u, avatar:(u.name||email).split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()});
+      } else {
+        // Inscription Supabase Auth
+        const {data,error} = await supabase.auth.signUp({email,password:pass});
+        if(error) throw new Error(error.message);
+        // Crée le profil dans la table users
+        const avatar = name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()||"U";
+        const newUser = {id:data.user.id,email,name,company:company||"Mon entreprise",plan:"trial",avatar};
+        await supabase.from("users").insert([newUser]);
+        onLogin(newUser);
+      }
+    } catch(err) {
+      setErr({global: err.message || "Une erreur est survenue"});
     }
     setLoad(false);
   }
