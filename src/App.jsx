@@ -764,6 +764,650 @@ function NewDevisWizard({onDone,onCancel}){
   );
 }
 
+
+/* ─────────────────────────────────────────
+   HOOK  — détection mobile
+───────────────────────────────────────── */
+function useIsMobile(){ 
+  const [mobile, setMobile] = useState(typeof window !== "undefined" ? window.innerWidth < 768 : false);
+  useEffect(()=>{
+    const fn = ()=>setMobile(window.innerWidth<768);
+    window.addEventListener("resize",fn);
+    return ()=>window.removeEventListener("resize",fn);
+  },[]);
+  return mobile;
+}
+
+
+/* ═══════════════════════════════════════════
+   MOBILE APP  — interface native mobile
+   Basée sur le design screenshot fourni
+═══════════════════════════════════════════ */
+function MobileApp({user, onLogout, page, setPage}){
+  const [devis, setDevis] = useState(SEED_DEVIS);
+  const initials = (user.name||user.email||"U").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+
+  const TABS = [
+    {id:"dashboard", icon:"dashboard",     label:"Dashboard"},
+    {id:"devis",     icon:"auto_awesome",  label:"Devis AI"},
+    {id:"factures",  icon:"description",   label:"Factures"},
+    {id:"tarifs",    icon:"sell",          label:"Tarifs"},
+  ];
+
+  async function addDevis(d){
+    setDevis(prev=>[d,...prev]);
+  }
+
+  return(
+    <div style={{minHeight:"100dvh",background:N.surface,fontFamily:"'Hanken Grotesk',sans-serif",
+      color:N.text,paddingTop:64,paddingBottom:80,position:"relative",overflow:"hidden"}}>
+
+      {/* Decorative blobs */}
+      <div style={{position:"fixed",top:"-10%",right:"-5%",width:"40%",height:"40%",
+        borderRadius:"50%",background:"rgba(62,221,199,.05)",filter:"blur(80px)",
+        pointerEvents:"none",zIndex:0}}/>
+      <div style={{position:"fixed",bottom:"-5%",left:"-5%",width:"30%",height:"30%",
+        borderRadius:"50%",background:"rgba(1,17,99,.04)",filter:"blur(80px)",
+        pointerEvents:"none",zIndex:0}}/>
+
+      {/* ── TOP NAV ── */}
+      <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:50,
+        background:N.white,borderBottom:`1px solid ${N.outline}20`,
+        display:"flex",justifyContent:"space-between",alignItems:"center",
+        padding:"0 16px",height:64}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:32,height:32,borderRadius:"50%",background:N.navy,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            color:"#fff",fontSize:12,fontWeight:700,flexShrink:0}}>
+            {initials}
+          </div>
+          <span style={{fontSize:20,fontWeight:700,color:N.navy,letterSpacing:"-0.3px"}}>DevisFlow</span>
+        </div>
+        <button style={{background:"none",border:"none",cursor:"pointer",padding:8,color:N.textSec}}>
+          <span className="material-symbols-outlined" style={{fontSize:24}}>notifications</span>
+        </button>
+      </nav>
+
+      {/* ── CONTENT ── */}
+      <div style={{position:"relative",zIndex:1}}>
+        {page==="devis"  && <MobileDevisPage devis={devis} onDone={addDevis} user={user}/>}
+        {page==="dashboard" && <MobileDashboard devis={devis} onNewDevis={()=>setPage("devis")}/>}
+        {page==="factures" && <MobileFactures/>}
+        {page==="tarifs"   && <MobileTarifs/>}
+      </div>
+
+      {/* ── BOTTOM NAV ── */}
+      <nav style={{position:"fixed",bottom:0,left:0,right:0,zIndex:50,
+        background:N.white,borderTop:`1px solid rgba(198,197,211,.3)`,
+        display:"flex",justifyContent:"space-around",alignItems:"center",
+        padding:"8px 8px env(safe-area-inset-bottom,8px)",
+        boxShadow:"0 -4px 20px rgba(30,43,120,.05)"}}>
+        {TABS.map(t=>{
+          const active = page===t.id;
+          return(
+            <button key={t.id} onClick={()=>setPage(t.id)}
+              style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+                gap:2,border:"none",cursor:"pointer",fontFamily:"inherit",padding:"4px 8px",
+                background:active?"rgba(138,76,252,.12)":"transparent",
+                borderRadius:12,minWidth:60,transition:"all .15s",
+                color:active?"#8a4cfc":N.textSec}}>
+              <span className="material-symbols-outlined" style={{fontSize:22,
+                fontVariationSettings:active?"'FILL' 1,'wght' 600,'GRAD' 0,'opsz' 24":"'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24"}}>
+                {t.icon}
+              </span>
+              <span style={{fontSize:10,fontWeight:active?600:400,letterSpacing:"0.04em",
+                fontFamily:"'JetBrains Mono',monospace"}}>
+                {t.label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap');
+        .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-family:'Material Symbols Outlined';}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes pulse{0%,100%{opacity:.3;transform:scale(.85)}50%{opacity:1;transform:scale(1)}}
+        *{box-sizing:border-box}
+      `}</style>
+    </div>
+  );
+}
+
+/* ─── Mobile Devis Page ─────────────────── */
+function MobileDevisPage({devis, onDone, user}){
+  const [desc,setDesc]=useState("");
+  const [client,setClient]=useState("");
+  const [email,setEmail]=useState("");
+  const [gen,setGen]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [sent,setSent]=useState(false);
+  const [focused,setFocused]=useState(false);
+
+  const EXAMPLES=[
+    {icon:"📸","label":"Shooting photo événementiel"},
+    {icon:"🖥️","label":"Maintenance serveur (1 an)"},
+    {icon:"✍️","label":"Rédaction 4 articles SEO"},
+    {icon:"🎨","label":"Design logo + charte"},
+    {icon:"⚡","label":"Dev app mobile React"},
+  ];
+
+  async function generate(){
+    if(!desc.trim()&&!client.trim()) return;
+    setLoading(true);
+    try{
+      const r=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,
+          messages:[{role:"user",content:
+            `Génère un devis professionnel français. Client: ${client||"Client"}. `+
+            `Description: ${desc||"prestation professionnelle"}.
+`+
+            `Réponds UNIQUEMENT avec JSON sans backticks:
+`+
+            `{"client":"nom client","lignes":[{"desc":"libellé","detail":"sous-détail","qte":1,"pu":800}],"conditions":"conditions","delai":"délai"}`
+          }]})
+      });
+      const d=await r.json();
+      const txt=d.content.map(b=>b.text||"").join("").replace(/\`\`\`json|\`\`\`/g,"").trim();
+      setGen(JSON.parse(txt));
+    }catch{
+      setGen({
+        client:client||"TechCorp Solutions",
+        lignes:[
+          {desc:"Prestation principale",detail:desc||"Selon cahier des charges",qte:1,pu:1200},
+          {desc:"Support post-livraison",detail:"Assistance technique (1 mois)",qte:1,pu:450},
+        ],
+        conditions:"Règlement à 30 jours à réception de facture. Pénalités de retard : 3 fois le taux d'intérêt légal.",
+        delai:"3 à 4 semaines ouvrées"
+      });
+    }
+    setLoading(false);
+  }
+
+  function send(){
+    const total=gen?.lignes.reduce((s,l)=>s+l.qte*(l.pu||0),0)||1200;
+    const c = gen?.client||client||"Client";
+    onDone({
+      id:`DEV-${String(Math.floor(Math.random()*90000)+10000)}`,
+      client:c, email, montant:total, statut:"envoyé",
+      date:new Date().toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}),
+      type:"Devis IA", lignes:gen?.lignes||[]
+    });
+    setSent(true);
+    setGen(null); setDesc(""); setClient(""); setEmail("");
+    setTimeout(()=>setSent(false),3000);
+  }
+
+  const ref = `F${new Date().getFullYear()}${String(Math.floor(Math.random()*90000)+10000)}`;
+  const ht = gen?.lignes.reduce((s,l)=>s+l.qte*(l.pu||0),0)||0;
+  const tva = Math.round(ht*.2);
+  const now = new Date().toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});
+
+  return(
+    <div style={{padding:"0 16px 16px",animation:"fadeUp .3s ease"}}>
+
+      {/* Page title */}
+      <div style={{marginBottom:20,paddingTop:8}}>
+        <h1 style={{fontSize:26,fontWeight:700,color:N.text,margin:"0 0 4px",letterSpacing:"-0.4px"}}>
+          Assistant Devis IA
+        </h1>
+        <p style={{fontSize:13,color:N.textSec,margin:0,lineHeight:1.5}}>
+          Transformez vos besoins en devis professionnels en quelques secondes.
+        </p>
+      </div>
+
+      {/* AI Status badge */}
+      <div style={{background:"rgba(62,221,199,.1)",border:"1px solid rgba(62,221,199,.3)",
+        borderRadius:20,padding:"6px 14px",display:"inline-flex",alignItems:"center",gap:6,
+        marginBottom:20}}>
+        <span style={{width:7,height:7,borderRadius:"50%",background:"#3cddc7",display:"inline-block"}}/>
+        <span style={{fontSize:12,fontWeight:600,color:"#005047",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.04em"}}>
+          Moteur AI v4.0 Actif
+        </span>
+      </div>
+
+      {/* Input card */}
+      <div style={{background:N.white,borderRadius:16,padding:20,marginBottom:16,
+        border:`1px solid ${N.outline}20`,boxShadow:"0 2px 16px rgba(1,17,99,.06)",
+        transition:"transform .2s",transform:focused?"scale(1.01)":"scale(1)"}}>
+        <h3 style={{fontSize:16,fontWeight:700,margin:"0 0 6px"}}>Expression du besoin</h3>
+        <p style={{fontSize:12,color:N.textSec,margin:"0 0 14px",lineHeight:1.5}}>
+          Décrivez votre prestation, vos tarifs ou importez une discussion client. Notre IA s'occupe de la structure.
+        </p>
+
+        {/* Client field */}
+        <input value={client} onChange={e=>setClient(e.target.value)}
+          placeholder="Nom du client (ex: TechCorp Solutions)"
+          style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`1px solid ${N.outline}30`,
+            background:N.surface,fontSize:13,color:N.text,marginBottom:10,fontFamily:"inherit",outline:"none"}}
+          onFocus={e=>e.target.style.borderColor=N.violet}
+          onBlur={e=>e.target.style.borderColor=`${N.outline}30`}/>
+
+        {/* Textarea */}
+        <div style={{position:"relative",border:`1px solid ${N.outline}30`,borderRadius:12,
+          background:N.surface,transition:"border-color .2s"}}>
+          <textarea
+            value={desc} onChange={e=>setDesc(e.target.value)}
+            onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
+            placeholder={`Ex: Génère-moi un devis pour une formation de 2 jours sur React pour 5 personnes chez TechCorp. Tarif: 800€/jour...`}
+            style={{width:"100%",padding:"14px 14px 48px",borderRadius:12,border:"none",
+              fontSize:13,height:130,resize:"none",fontFamily:"inherit",lineHeight:1.55,
+              color:N.text,background:"transparent",outline:"none"}}/>
+          <div style={{position:"absolute",bottom:10,right:10,display:"flex",gap:8}}>
+            <button style={{width:36,height:36,borderRadius:"50%",background:N.surfaceHigh,
+              border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <span className="material-symbols-outlined" style={{fontSize:18,color:N.textSec}}>mic</span>
+            </button>
+            <button style={{width:36,height:36,borderRadius:"50%",background:N.surfaceHigh,
+              border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <span className="material-symbols-outlined" style={{fontSize:18,color:N.textSec}}>attach_file</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick examples */}
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:11,fontWeight:600,color:N.textSec,letterSpacing:"0.06em",
+          textTransform:"uppercase",fontFamily:"'JetBrains Mono',monospace",marginBottom:10}}>
+          Exemples rapides
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {EXAMPLES.map(ex=>(
+            <button key={ex.label} onClick={()=>setDesc(ex.label)}
+              style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
+                background:N.white,border:`1px solid ${N.outline}20`,borderRadius:12,
+                fontSize:13,cursor:"pointer",fontFamily:"inherit",color:N.text,
+                textAlign:"left",boxShadow:"0 1px 4px rgba(1,17,99,.04)",
+                transition:"all .15s"}}
+              onMouseEnter={e=>e.currentTarget.style.background=N.surfaceHigh}
+              onMouseLeave={e=>e.currentTarget.style.background=N.white}>
+              <span>{ex.icon}</span>{ex.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Generate button */}
+      <button onClick={generate} disabled={loading||(!desc.trim()&&!client.trim())}
+        style={{width:"100%",padding:"15px",borderRadius:14,border:"none",
+          background:loading||(!desc.trim()&&!client.trim())
+            ?"#ccc"
+            :"linear-gradient(135deg, #3cddc7 0%, #00d2b4 100%)",
+          color:loading||(!desc.trim()&&!client.trim())?N.textSec:"#003b34",
+          fontSize:15,fontWeight:700,cursor:"pointer",
+          display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+          boxShadow:"0 4px 16px rgba(62,221,199,.4)",marginBottom:24,
+          transition:"all .2s"}}>
+        {loading
+          ?<><span className="material-symbols-outlined" style={{animation:"spin 1s linear infinite",fontSize:20}}>sync</span> Analyse en cours…</>
+          :<><span className="material-symbols-outlined" style={{fontSize:20}}>auto_awesome</span> Générer avec l&apos;IA</>}
+      </button>
+
+      {/* Success toast */}
+      {sent&&(
+        <div style={{background:"#ecfdf5",border:"1px solid #6ee7b7",borderRadius:12,
+          padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:8,
+          color:"#059669",fontSize:13,fontWeight:500,animation:"fadeUp .3s ease"}}>
+          <span className="material-symbols-outlined" style={{fontSize:18}}>check_circle</span>
+          Devis enregistré avec succès !
+        </div>
+      )}
+
+      {/* Document preview */}
+      {gen&&(
+        <div style={{animation:"fadeUp .4s ease"}}>
+          {/* Draft header */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+            marginBottom:12}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{background:N.violet,color:"#fff",padding:"4px 10px",borderRadius:8,
+                fontSize:10,fontWeight:700,letterSpacing:"0.05em",fontFamily:"'JetBrains Mono',monospace"}}>
+                BROUILLON IA
+              </div>
+              <span style={{fontSize:12,color:N.textSec}}>
+                Dernière modification : {new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}
+              </span>
+            </div>
+            <div style={{display:"flex",gap:6}}>
+              <button style={{width:36,height:36,background:N.white,border:`1px solid ${N.outline}30`,
+                borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+                boxShadow:"0 1px 3px rgba(0,0,0,.06)"}}>
+                <span className="material-symbols-outlined" style={{fontSize:18,color:N.textSec}}>edit</span>
+              </button>
+              <button style={{width:36,height:36,background:N.white,border:`1px solid ${N.outline}30`,
+                borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+                boxShadow:"0 1px 3px rgba(0,0,0,.06)"}}>
+                <span className="material-symbols-outlined" style={{fontSize:18,color:N.textSec}}>file_download</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Invoice document */}
+          <div style={{background:N.white,borderRadius:16,padding:20,
+            boxShadow:"0 8px 32px rgba(1,17,99,.12)",marginBottom:16,position:"relative",overflow:"hidden"}}>
+
+            {/* Watermark */}
+            <div style={{position:"absolute",top:20,right:10,opacity:0.03,pointerEvents:"none",fontSize:120}}>
+              <span className="material-symbols-outlined">verified_user</span>
+            </div>
+
+            {/* Header */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
+              <div>
+                <div style={{fontSize:20,fontWeight:700,color:N.navy,letterSpacing:"-0.3px",marginBottom:2}}>
+                  DEVIS {ref}
+                </div>
+                <div style={{fontSize:12,color:N.textSec}}>Date : {now}</div>
+              </div>
+              <div style={{width:52,height:52,background:N.navy,borderRadius:12,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                color:"#fff",fontSize:14,fontWeight:700,fontStyle:"italic",flexShrink:0}}>
+                {(user.company||user.name||"DF").slice(0,3)}.
+              </div>
+            </div>
+
+            {/* Émetteur / Destinataire */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}}>
+              <div>
+                <div style={{fontSize:10,fontWeight:600,color:N.textSec,textTransform:"uppercase",
+                  letterSpacing:"0.08em",fontFamily:"'JetBrains Mono',monospace",marginBottom:4}}>Émetteur</div>
+                <div style={{fontWeight:700,fontSize:13}}>{user.company||user.name||"Mon Entreprise"}</div>
+                <div style={{fontSize:11,color:N.textSec,lineHeight:1.6}}>
+                  {user.email||"contact@monentreprise.fr"}
+                </div>
+              </div>
+              <div>
+                <div style={{fontSize:10,fontWeight:600,color:N.textSec,textTransform:"uppercase",
+                  letterSpacing:"0.08em",fontFamily:"'JetBrains Mono',monospace",marginBottom:4}}>Destinataire</div>
+                <div style={{fontWeight:700,fontSize:13}}>{gen.client||client||"Client"}</div>
+                {email&&<div style={{fontSize:11,color:N.textSec}}>{email}</div>}
+              </div>
+            </div>
+
+            {/* Table */}
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",marginBottom:16,minWidth:280}}>
+                <thead>
+                  <tr style={{borderBottom:`1px solid ${N.outline}30`}}>
+                    {["DÉTAIL","PU HT","QTÉ","TOTAL HT"].map((h,i)=>(
+                      <th key={h} style={{padding:"8px 0",textAlign:i===0?"left":"right",
+                        fontSize:9,fontWeight:600,color:N.textSec,letterSpacing:"0.08em",
+                        fontFamily:"'JetBrains Mono',monospace"}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {gen.lignes.map((l,i)=>{
+                    const t=l.qte*(l.pu||0);
+                    return(
+                      <tr key={i} style={{borderBottom:`1px solid rgba(198,197,211,.2)`}}>
+                        <td style={{padding:"10px 0"}}>
+                          <div style={{fontWeight:600,fontSize:12}}>{l.desc}</div>
+                          {l.detail&&<div style={{fontSize:10,color:N.textSec,fontStyle:"italic"}}>{l.detail}</div>}
+                        </td>
+                        <td style={{padding:"10px 0",textAlign:"right",fontSize:11,whiteSpace:"nowrap"}}>
+                          {l.pu?`${l.pu.toLocaleString("fr-FR")},00 €`:"Inclus"}
+                        </td>
+                        <td style={{padding:"10px 0",textAlign:"right",fontSize:11}}>{l.qte}</td>
+                        <td style={{padding:"10px 0",textAlign:"right",fontSize:12,fontWeight:700,whiteSpace:"nowrap"}}>
+                          {t?`${t.toLocaleString("fr-FR")},00 €`:"—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Totaux */}
+            <div style={{display:"flex",justifyContent:"flex-end",marginBottom:16}}>
+              <div style={{width:200}}>
+                {[["Total HT",`${ht.toLocaleString("fr-FR")},00 €`],
+                  ["TVA (20%)",`${tva.toLocaleString("fr-FR")},00 €`]].map(([k,v])=>(
+                  <div key={k} style={{display:"flex",justifyContent:"space-between",
+                    padding:"4px 0",fontSize:12}}>
+                    <span style={{color:N.textSec}}>{k}</span>
+                    <span style={{fontWeight:600}}>{v}</span>
+                  </div>
+                ))}
+                <div style={{display:"flex",justifyContent:"space-between",
+                  borderTop:`1px solid ${N.navy}`,paddingTop:6,marginTop:4}}>
+                  <span style={{fontWeight:700,color:N.navy,fontSize:13}}>Total TTC</span>
+                  <span style={{fontWeight:700,color:N.navy,fontSize:16}}>
+                    {(ht+tva).toLocaleString("fr-FR")},00 €
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Conditions */}
+            <div style={{borderTop:`1px solid rgba(198,197,211,.2)`,paddingTop:12}}>
+              <div style={{fontSize:9,fontWeight:700,color:N.textSec,textTransform:"uppercase",
+                letterSpacing:"0.08em",marginBottom:4}}>Conditions de règlement</div>
+              <div style={{fontSize:10,color:N.textSec,lineHeight:1.6}}>{gen.conditions}</div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <button onClick={send}
+              style={{width:"100%",padding:"14px",background:N.navy,color:"#fff",border:"none",
+                borderRadius:12,fontSize:14,fontWeight:700,cursor:"pointer",
+                display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+                boxShadow:"0 4px 14px rgba(1,17,99,.25)"}}>
+              <span className="material-symbols-outlined" style={{fontSize:20}}>send</span>
+              Envoyer au client
+            </button>
+            <button style={{width:"100%",padding:"14px",background:N.white,
+              border:`1px solid ${N.outline}30`,color:N.text,borderRadius:12,
+              fontSize:14,fontWeight:700,cursor:"pointer",
+              display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+              boxShadow:"0 2px 8px rgba(1,17,99,.06)"}}>
+              <span className="material-symbols-outlined" style={{fontSize:20}}>content_copy</span>
+              Convertir en facture
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Mobile Dashboard ──────────────────── */
+function MobileDashboard({devis, onNewDevis}){
+  const totalSigne = devis.filter(d=>d.statut==="signé").reduce((s,d)=>s+d.montant,0);
+  const enCours = devis.filter(d=>["envoyé","en attente","relancé"].includes(d.statut)).length;
+
+  return(
+    <div style={{padding:"0 16px 16px",animation:"fadeUp .3s ease"}}>
+      <div style={{paddingTop:8,marginBottom:20}}>
+        <h1 style={{fontSize:24,fontWeight:700,color:N.text,margin:"0 0 4px",letterSpacing:"-0.4px"}}>
+          Bonjour 👋
+        </h1>
+        <p style={{fontSize:13,color:N.textSec,margin:0}}>Voici votre activité du jour</p>
+      </div>
+
+      {/* KPIs */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+        {[
+          {l:"CA signé",v:fmt(totalSigne),icon:"trending_up",c:"#059669",bg:"#d1fae5"},
+          {l:"En cours",v:enCours,icon:"description",c:N.violet,bg:"#eaddff"},
+          {l:"Retards",v:"3",icon:"warning",c:"#dc2626",bg:"#fee2e2"},
+          {l:"Ce mois",v:fmt(totalSigne+2400),icon:"payments",c:N.navy,bg:N.surfaceHigh},
+        ].map((m,i)=>(
+          <div key={i} style={{background:N.white,border:`1px solid ${N.outline}20`,
+            borderRadius:14,padding:"16px 14px",boxShadow:"0 2px 8px rgba(1,17,99,.06)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+              <div style={{fontSize:10,fontWeight:600,color:N.textSec,textTransform:"uppercase",
+                letterSpacing:"0.05em",fontFamily:"'JetBrains Mono',monospace"}}>{m.l}</div>
+              <div style={{width:28,height:28,borderRadius:8,background:m.bg,
+                display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <span className="material-symbols-outlined" style={{fontSize:15,color:m.c}}>{m.icon}</span>
+              </div>
+            </div>
+            <div style={{fontSize:20,fontWeight:700,letterSpacing:"-0.3px"}}>{m.v}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* New Quote CTA */}
+      <button onClick={onNewDevis}
+        style={{width:"100%",padding:"15px",background:"linear-gradient(135deg,#712ae2,#8a4cfc)",
+          color:"#fff",border:"none",borderRadius:14,fontSize:15,fontWeight:700,cursor:"pointer",
+          display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:16,
+          boxShadow:"0 4px 16px rgba(113,42,226,.35)"}}>
+        <span className="material-symbols-outlined" style={{fontSize:20}}>add</span>
+        Nouveau devis IA
+      </button>
+
+      {/* Recent devis */}
+      <div style={{background:N.white,borderRadius:16,overflow:"hidden",
+        border:`1px solid ${N.outline}20`,boxShadow:"0 2px 8px rgba(1,17,99,.06)"}}>
+        <div style={{padding:"14px 16px",borderBottom:`1px solid ${N.outline}20`,
+          fontSize:14,fontWeight:600,color:N.text}}>Derniers devis</div>
+        {devis.slice(0,5).map((d,i)=>{
+          const s = {"signé":{c:"#059669",bg:"#d1fae5"},"envoyé":{c:N.navy,bg:N.surfaceHigh},
+            "en attente":{c:"#d97706",bg:"#fef3c7"},"relancé":{c:N.violet,bg:"#eaddff"},
+            "brouillon":{c:N.textSec,bg:N.surface}}[d.statut]||{c:N.textSec,bg:N.surface};
+          return(
+            <div key={d.id||i} style={{display:"flex",justifyContent:"space-between",
+              alignItems:"center",padding:"12px 16px",
+              borderBottom:i<4?`1px solid ${N.surface}`:"none"}}>
+              <div>
+                <div style={{fontWeight:500,fontSize:13}}>{d.client}</div>
+                <div style={{fontSize:11,color:N.textSec}}>{d.date}</div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontWeight:600,fontSize:13}}>{fmt(d.montant)}</span>
+                <span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:600,
+                  background:s.bg,color:s.c,whiteSpace:"nowrap"}}>
+                  {d.statut.charAt(0).toUpperCase()+d.statut.slice(1)}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Mobile Factures ───────────────────── */
+function MobileFactures(){
+  const data=[
+    {id:"FAC-001",client:"Agence Lumino",date:"10 mai",montant:2880,statut:"payée"},
+    {id:"FAC-002",client:"BioTech Lab",date:"2 mai",montant:6960,statut:"en attente"},
+    {id:"FAC-003",client:"ComArt Studio",date:"1 avr",montant:888,statut:"en retard"},
+    {id:"FAC-004",client:"Nexus Digital",date:"15 avr",montant:3840,statut:"payée"},
+  ];
+  const STATUS={"payée":{c:"#059669",bg:"#d1fae5",l:"PAID"},"en attente":{c:"#d97706",bg:"#fef3c7",l:"PENDING"},"en retard":{c:"#dc2626",bg:"#fee2e2",l:"OVERDUE"}};
+
+  return(
+    <div style={{padding:"0 16px 16px",animation:"fadeUp .3s ease"}}>
+      <div style={{paddingTop:8,marginBottom:20}}>
+        <h1 style={{fontSize:24,fontWeight:700,color:N.text,margin:"0 0 4px",letterSpacing:"-0.4px"}}>Factures</h1>
+        <p style={{fontSize:13,color:N.textSec,margin:0}}>4 factures · 2 en attente</p>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {data.map((f,i)=>{
+          const s=STATUS[f.statut]||STATUS["en attente"];
+          return(
+            <div key={f.id} style={{background:N.white,borderRadius:14,padding:"16px",
+              border:`1px solid ${N.outline}20`,boxShadow:"0 2px 8px rgba(1,17,99,.04)",
+              display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <div style={{fontSize:11,fontWeight:600,color:N.violet,fontFamily:"'JetBrains Mono',monospace",marginBottom:2}}>{f.id}</div>
+                <div style={{fontWeight:500,fontSize:14}}>{f.client}</div>
+                <div style={{fontSize:11,color:N.textSec}}>{f.date}</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>{fmt(f.montant)}</div>
+                <span style={{padding:"2px 10px",borderRadius:20,fontSize:9,fontWeight:700,
+                  letterSpacing:"0.08em",textTransform:"uppercase",fontFamily:"'JetBrains Mono',monospace",
+                  background:s.bg,color:s.c}}>{s.l}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Mobile Tarifs ─────────────────────── */
+function MobileTarifs(){
+  const [annual,setAnnual]=useState(false);
+  const plans=[
+    {id:"starter",name:"Starter",price:19,priceY:15,desc:"Pour démarrer",
+      features:["5 devis/mois","Facturation basique","Export PDF"],cta:"Démarrer",c:N.textSec},
+    {id:"pro",name:"Pro",price:39,priceY:31,featured:true,desc:"Pour les freelances",
+      features:["Devis illimités","IA rédaction","Relances auto","Signature élec.","Support prioritaire"],
+      cta:"Essai 14j gratuit",c:N.violet},
+    {id:"business",name:"Business",price:79,priceY:63,desc:"Pour les agences",
+      features:["Tout Pro inclus","Multi-users (5)","API & webhooks","Manager dédié"],
+      cta:"Nous contacter",c:N.navy},
+  ];
+  return(
+    <div style={{padding:"0 16px 16px",animation:"fadeUp .3s ease"}}>
+      <div style={{paddingTop:8,marginBottom:20}}>
+        <h1 style={{fontSize:24,fontWeight:700,color:N.text,margin:"0 0 4px",letterSpacing:"-0.4px"}}>Tarifs</h1>
+        <p style={{fontSize:13,color:N.textSec,margin:0}}>Sans engagement · résiliation immédiate</p>
+      </div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:20}}>
+        <span style={{fontSize:13,fontWeight:500,color:annual?N.textSec:N.text}}>Mensuel</span>
+        <div onClick={()=>setAnnual(!annual)} style={{width:44,height:24,borderRadius:12,
+          background:annual?N.violet:N.outline,cursor:"pointer",position:"relative",transition:"background .2s"}}>
+          <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",
+            position:"absolute",top:2,left:annual?22:2,transition:"left .2s"}}/>
+        </div>
+        <span style={{fontSize:13,fontWeight:500,color:annual?N.text:N.textSec}}>
+          Annuel <span style={{background:"#d1fae5",color:"#059669",padding:"1px 7px",borderRadius:20,fontSize:10,fontWeight:600,marginLeft:4}}>-20%</span>
+        </span>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        {plans.map(p=>(
+          <div key={p.id} style={{background:N.white,borderRadius:16,padding:"20px",
+            border:p.featured?`2px solid ${N.violet}`:`1px solid ${N.outline}20`,
+            boxShadow:p.featured?"0 8px 32px rgba(113,42,226,.15)":"0 2px 8px rgba(1,17,99,.04)",
+            position:"relative"}}>
+            {p.featured&&<div style={{position:"absolute",top:-12,left:20,
+              background:N.violet,color:"#fff",padding:"2px 12px",borderRadius:20,
+              fontSize:10,fontWeight:600}}>✦ Le plus populaire</div>}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+              <div>
+                <div style={{fontSize:11,color:p.c,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}}>{p.name}</div>
+                <div style={{fontSize:13,color:N.textSec}}>{p.desc}</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <span style={{fontSize:28,fontWeight:800,letterSpacing:"-0.5px"}}>{annual?p.priceY:p.price}€</span>
+                <span style={{fontSize:11,color:N.textSec}}>/mois</span>
+              </div>
+            </div>
+            <div style={{marginBottom:14}}>
+              {p.features.map(f=>(
+                <div key={f} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,fontSize:13}}>
+                  <span className="material-symbols-outlined" style={{fontSize:14,color:"#059669"}}>check_circle</span>
+                  {f}
+                </div>
+              ))}
+            </div>
+            <button style={{width:"100%",padding:"12px",borderRadius:10,border:"none",cursor:"pointer",
+              fontSize:13,fontWeight:700,fontFamily:"inherit",
+              background:p.featured?N.violet:p.id==="business"?N.navy:"#f1f5ff",
+              color:p.featured||p.id==="business"?"#fff":N.text}}>
+              {p.cta}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════
    APP SHELL  — New UI (Navy + Violet)
 ═══════════════════════════════════════════ */
@@ -806,6 +1450,7 @@ function NavLink({item, active, onClick}){
 }
 
 function AppShell({user,onLogout}){
+  const isMobile = useIsMobile();
   const [page,setPage]=useState("devis");
   const [devis,setDevis]=useState([]);
   const [loadingDevis,setLoadingDevis]=useState(true);
@@ -846,6 +1491,8 @@ function AppShell({user,onLogout}){
   const enCours=devis.filter(d=>["envoyé","en attente","relancé"].includes(d.statut)).length;
   const tauxSign=devis.length?Math.round(devis.filter(d=>d.statut==="signé").length/devis.length*100):0;
   const initials=(user.name||user.email||"U").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+
+  if(isMobile) return <MobileApp user={user} onLogout={onLogout} page={page} setPage={setPage}/>;
 
   return(
     <div style={{display:"flex",height:"100vh",background:N.surface,fontFamily:"'Hanken Grotesk','DM Sans',sans-serif",overflow:"hidden",color:N.text}}>
