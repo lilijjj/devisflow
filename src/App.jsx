@@ -931,9 +931,7 @@ function AppShell({user,onLogout}){
       <main style={{flex:1,overflow:"auto",display:"flex",flexDirection:"column"}}>
 
         {/* Top bar */}
-        <div style={{padding:"16px 32px",background:N.white,borderBottom:`1px solid ${N.outline}`,
-          display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,
-          boxShadow:"0 1px 0 rgba(0,0,0,.04)"}}>
+        <div className="topbar" style={{padding:"16px 32px",background:N.white,borderBottom:`1px solid ${N.outline}`,display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,boxShadow:"0 1px 0 rgba(0,0,0,.04)"}}>
           <h2 style={{margin:0,fontSize:20,fontWeight:700,color:N.text,letterSpacing:"-0.3px"}}>
             {page==="dashboard"&&"Dashboard"}
             {page==="devis"&&"AI Quote Generator"}
@@ -962,7 +960,7 @@ function AppShell({user,onLogout}){
         </div>
 
         {/* Page content */}
-        <div style={{padding:32,flex:1,overflow:"auto"}}>
+        <div className="page-content" style={{padding:32,flex:1,overflow:"auto"}}>
           {page==="dashboard"&&<DashboardNew devis={devis} totalSigne={totalSigne} enCours={enCours} tauxSign={tauxSign} onNewDevis={()=>{setPage("devis");setNewOpen(true);}}/>}
           {page==="devis"&&<AIQuotePage devis={devis} onDone={addDevis} user={user}/>}
           {page==="factures"&&<FactureStatic/>}
@@ -971,17 +969,42 @@ function AppShell({user,onLogout}){
         </div>
       </main>
 
-      {/* Mobile bottom nav */}
+      {/* Mobile bottom nav — app native style */}
       <div className="mobile-nav" style={{display:"none"}}>
-        {NAV.map(n=>(
-          <button key={n.id} onClick={()=>{setPage(n.id);setNewOpen(false);}}
-            style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,
-              background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",
-              color:page===n.id?N.navy:N.textTer,padding:"4px 0"}}>
-            <span className="material-symbols-outlined" style={{fontSize:20}}>{n.icon}</span>
-            <span style={{fontSize:9,fontWeight:page===n.id?600:400}}>{n.label}</span>
-          </button>
-        ))}
+        {NAV.slice(0,4).map(n=>{
+          const active = page===n.id;
+          return(
+            <button key={n.id} onClick={()=>{setPage(n.id);setNewOpen(false);}}
+              style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+                background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",
+                color:active?N.violet:N.textTer,padding:"4px 0",position:"relative"}}>
+              {/* Active pill */}
+              {active&&<div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",
+                width:32,height:3,borderRadius:"0 0 3px 3px",background:N.violet}}/>}
+              <div style={{width:40,height:28,borderRadius:8,
+                background:active?"rgba(113,42,226,.1)":"transparent",
+                display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s"}}>
+                <span className="material-symbols-outlined" style={{fontSize:21,
+                  fontVariationSettings:active?"'FILL' 1,'wght' 600,'GRAD' 0,'opsz' 24":"'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24"}}>
+                  {n.icon}
+                </span>
+              </div>
+              <span style={{fontSize:9,fontWeight:active?600:400,letterSpacing:"0.02em"}}>{n.label.split(" ")[0]}</span>
+            </button>
+          );
+        })}
+        {/* FAB New Quote */}
+        <button onClick={()=>{setPage("devis");setNewOpen(false);}}
+          style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+            background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",
+            color:N.violet,padding:"4px 0"}}>
+          <div style={{width:42,height:28,borderRadius:8,background:N.violet,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            boxShadow:"0 2px 8px rgba(113,42,226,.35)"}}>
+            <span className="material-symbols-outlined" style={{fontSize:21,color:"#fff"}}>add</span>
+          </div>
+          <span style={{fontSize:9,fontWeight:600,color:N.violet}}>New Quote</span>
+        </button>
       </div>
 
       <style>{`
@@ -994,10 +1017,62 @@ function AppShell({user,onLogout}){
         *{box-sizing:border-box}
         ::-webkit-scrollbar{width:6px} ::-webkit-scrollbar-thumb{background:#d3e4fe;border-radius:10px}
         @media(max-width:768px){
+          /* Sidebar cachée */
           aside{display:none !important}
-          .mobile-nav{display:flex !important;position:fixed;bottom:0;left:0;right:0;
-            background:#fff;border-top:1px solid #c6c5d3;z-index:100;padding:6px 0 10px;}
-          main{padding-bottom:80px !important}
+
+          /* Bottom nav visible */
+          .mobile-nav{
+            display:flex !important;
+            position:fixed;bottom:0;left:0;right:0;
+            background:#fff;border-top:1px solid #c6c5d3;
+            z-index:200;padding:6px 0 env(safe-area-inset-bottom,10px);
+            box-shadow:0 -2px 12px rgba(1,17,99,.08);
+          }
+
+          /* Main content padding */
+          main{ padding-bottom:72px !important; }
+
+          /* Top bar compact */
+          .topbar{ padding:12px 16px !important; }
+          .topbar h2{ font-size:17px !important; }
+          .topbar-actions{ gap:8px !important; }
+          .topbar-search{ display:none !important; }
+          .topbar-user-label{ display:none !important; }
+
+          /* Page content */
+          .page-content{ padding:16px !important; }
+
+          /* KPI grid → 1 col sur très petit, 2 col sinon */
+          .kpi-grid{ grid-template-columns:1fr 1fr !important; gap:10px !important; }
+
+          /* Chart grid → colonne */
+          .chart-ai-grid{ grid-template-columns:1fr !important; }
+          .ai-relance-panel{ order:-1; }
+
+          /* Invoice table scrollable */
+          .invoice-table-wrap{ overflow-x:auto !important; }
+          .invoice-table-wrap table{ min-width:600px; }
+
+          /* AI Quote page → colonne */
+          .quote-grid{ grid-template-columns:1fr !important; height:auto !important; }
+          .quote-preview{ min-height:500px; }
+
+          /* Form 2col → 1col */
+          .form-2col{ grid-template-columns:1fr !important; }
+
+          /* Plans → 1col */
+          .plans-grid{ grid-template-columns:1fr !important; }
+
+          /* Auth → cache left panel */
+          .auth-left{ display:none !important; }
+          .auth-right{ padding:24px 20px !important; }
+
+          /* Hide chart on small screen */
+          .revenue-chart{ display:none !important; }
+        }
+
+        @media(max-width:480px){
+          .kpi-grid{ grid-template-columns:1fr !important; }
         }
       `}</style>
     </div>
@@ -1052,7 +1127,7 @@ function DashboardNew({devis, totalSigne, enCours, tauxSign, onNewDevis}){
     <div style={{animation:"fadeUp .3s ease"}}>
 
       {/* KPIs */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16,marginBottom:24}}>
+      <div className="kpi-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16,marginBottom:24}}>
         {[
           {label:"TOTAL REVENUE",    val:"124 500,00 €", sub:"+12.5% from last month", subC:"#059669", subIcon:"trending_up", icon:"account_balance_wallet", iconC:N.navy, iconBg:N.surfaceHigh},
           {label:"PENDING INVOICES", val:"32 120,45 €",  sub:"8 invoices awaiting approval", subC:N.textSec, subIcon:null, icon:"pending_actions", iconC:N.violet, iconBg:"#eaddff"},
@@ -1082,7 +1157,7 @@ function DashboardNew({devis, totalSigne, enCours, tauxSign, onNewDevis}){
       </div>
 
       {/* Chart + AI Relance */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 300px",gap:16,marginBottom:24}}>
+      <div className="chart-ai-grid" style={{display:"grid",gridTemplateColumns:"1fr 300px",gap:16,marginBottom:24}}>
         {/* Line Chart */}
         <div style={{background:N.white,border:`1px solid ${N.outline}`,borderRadius:12,
           padding:"24px",boxShadow:N.shadow}}>
@@ -1182,8 +1257,7 @@ function DashboardNew({devis, totalSigne, enCours, tauxSign, onNewDevis}){
       </div>
 
       {/* Recent Invoices Table */}
-      <div style={{background:N.white,border:`1px solid ${N.outline}`,borderRadius:12,
-        overflow:"hidden",boxShadow:N.shadow}}>
+      <div className="invoice-table-wrap" style={{background:N.white,border:`1px solid ${N.outline}`,borderRadius:12,overflow:"hidden",boxShadow:N.shadow}}>
         <div style={{padding:"18px 24px",borderBottom:`1px solid ${N.outline}`,
           display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div style={{fontSize:18,fontWeight:700,color:N.text}}>Recent Invoices</div>
@@ -1300,7 +1374,7 @@ function AIQuotePage({devis, onDone, user}){
   const tva=Math.round(ht*.2);
 
   return(
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:24,height:"calc(100vh - 160px)",minHeight:600,animation:"fadeUp .3s ease"}}>
+    <div className="quote-grid" style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:24,height:"calc(100vh - 160px)",minHeight:600,animation:"fadeUp .3s ease"}}>
 
       {/* LEFT — Input panel */}
       <div style={{display:"flex",flexDirection:"column",gap:16,overflowY:"auto"}}>
@@ -1315,7 +1389,7 @@ function AIQuotePage({devis, onDone, user}){
           </p>
 
           {/* Client + Email */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+          <div className="form-2col" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
             <div>
               <label style={{fontSize:11,fontWeight:600,color:N.textSec,display:"block",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.05em"}}>Client *</label>
               <input value={client} onChange={e=>setClient(e.target.value)} placeholder="Acme Corporation"
@@ -1408,7 +1482,7 @@ function AIQuotePage({devis, onDone, user}){
       </div>
 
       {/* RIGHT — Live Preview */}
-      <div style={{display:"flex",flexDirection:"column",gap:12,overflowY:"auto"}}>
+      <div className="quote-preview" style={{display:"flex",flexDirection:"column",gap:12,overflowY:"auto"}}>
         {/* Header actions */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
           <h3 style={{margin:0,fontSize:16,fontWeight:600,color:N.text}}>Live Preview</h3>
@@ -1626,7 +1700,65 @@ function RelancesStatic(){
   </div>;
 }
 
+function Tarifs({user}){
+  const [annual,setAnnual]=useState(false);
+  const plans=[
+    {id:"starter",name:"Starter",price:19,priceY:15,desc:"Pour démarrer",
+      features:["5 devis / mois","Facturation basique","Relances manuelles","Export PDF"],cta:"Démarrer",color:N.textSec},
+    {id:"pro",name:"Pro",price:39,priceY:31,featured:true,desc:"Pour les freelances actifs",
+      features:["Devis illimités","IA rédaction devis","Relances auto J+7/J+14/J+30","Signature électronique","Dashboard avancé","Support prioritaire"],
+      cta:"Commencer l'essai 14j",color:N.violet},
+    {id:"business",name:"Business",price:79,priceY:63,desc:"Pour les agences",
+      features:["Tout Pro inclus","Multi-utilisateurs (5)","API & webhooks","Comptabilité connectée","Manager dédié"],
+      cta:"Nous contacter",color:N.navy},
+  ];
+  return <div style={{animation:"fadeUp .3s ease"}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:28}}>
+      <span style={{fontSize:13,fontWeight:500,color:annual?N.textSec:N.text}}>Mensuel</span>
+      <div onClick={()=>setAnnual(!annual)} style={{width:44,height:24,borderRadius:12,
+        background:annual?N.violet:N.outline,cursor:"pointer",position:"relative",transition:"background .2s"}}>
+        <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",
+          position:"absolute",top:2,left:annual?22:2,transition:"left .2s"}}/>
+      </div>
+      <span style={{fontSize:13,fontWeight:500,color:annual?N.text:N.textSec}}>
+        Annuel <span style={{background:"#d1fae5",color:"#059669",padding:"1px 8px",borderRadius:20,fontSize:11,fontWeight:600,marginLeft:4}}>-20%</span>
+      </span>
+    </div>
+    <div className="plans-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16,maxWidth:860,margin:"0 auto"}}>
+      {plans.map(p=>(
+        <div key={p.id} style={{background:N.white,borderRadius:14,padding:"24px",
+          border:p.featured?`2px solid ${N.violet}`:`1px solid ${N.outline}`,
+          position:"relative",boxShadow:p.featured?"0 8px 32px rgba(113,42,226,.15)":"0 2px 8px rgba(1,17,99,.06)"}}>
+          {p.featured&&<div style={{position:"absolute",top:-13,left:"50%",transform:"translateX(-50%)",
+            background:N.violet,color:"#fff",padding:"3px 16px",borderRadius:20,fontSize:11,fontWeight:600,
+            whiteSpace:"nowrap"}}>✦ Le plus populaire</div>}
+          <div style={{fontSize:11,color:p.color,fontWeight:600,marginBottom:6,textTransform:"uppercase",letterSpacing:"0.08em"}}>{p.name}</div>
+          <div style={{display:"flex",alignItems:"baseline",gap:2,marginBottom:2}}>
+            <span style={{fontSize:32,fontWeight:800,letterSpacing:"-0.5px"}}>{annual?p.priceY:p.price}€</span>
+            <span style={{fontSize:12,color:N.textSec}}>/mois</span>
+          </div>
+          <div style={{fontSize:12,color:N.textSec,marginBottom:16}}>{p.desc}</div>
+          <div style={{borderTop:`1px solid ${N.surface}`,paddingTop:14,marginBottom:18}}>
+            {p.features.map(f=>(
+              <div key={f} style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:8,fontSize:13}}>
+                <span className="material-symbols-outlined" style={{color:"#059669",fontSize:16,marginTop:1,flexShrink:0}}>check_circle</span>
+                {f}
+              </div>
+            ))}
+          </div>
+          <button style={{width:"100%",padding:"11px",borderRadius:8,cursor:"pointer",
+            fontSize:13,fontWeight:600,fontFamily:"inherit",border:"none",
+            background:p.featured?N.violet:p.id==="business"?N.navy:"#f1f5ff",
+            color:p.featured||p.id==="business"?"#fff":N.text}}>
+            {p.cta}
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>;
+}
 
+/* ─── ROOT ─────────────────────────────── */
 export default function DevisFlowApp(){
   const [user,setUser]=useState(null);
   if(!user) return <AuthPage onLogin={setUser}/>;
