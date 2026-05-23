@@ -1626,3 +1626,9 @@ function RelancesStatic(){
   </div>;
 }
 
+
+export default function DevisFlowApp(){
+  const [user,setUser]=useState(null);
+  if(!user) return <AuthPage onLogin={setUser}/>;
+  return <AppShell user={user} onLogout={()=>setUser(null)}/>;
+}
