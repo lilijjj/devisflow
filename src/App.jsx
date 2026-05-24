@@ -2763,64 +2763,6 @@ function RelancesStatic(){
   </div>;
 }
 
-function Tarifs({user}){
-  const [annual,setAnnual]=useState(false);
-  const plans=[
-    {id:"starter",name:"Starter",price:19,priceY:15,desc:"Pour démarrer",
-      features:["5 devis / mois","Facturation basique","Relances manuelles","Export PDF"],cta:"Démarrer",color:N.textSec},
-    {id:"pro",name:"Pro",price:39,priceY:31,featured:true,desc:"Pour les freelances actifs",
-      features:["Devis illimités","IA rédaction devis","Relances auto J+7/J+14/J+30","Signature électronique","Dashboard avancé","Support prioritaire"],
-      cta:"Commencer l'essai 14j",color:N.violet},
-    {id:"business",name:"Business",price:79,priceY:63,desc:"Pour les agences",
-      features:["Tout Pro inclus","Multi-utilisateurs (5)","API & webhooks","Comptabilité connectée","Manager dédié"],
-      cta:"Nous contacter",color:N.navy},
-  ];
-  return <div style={{animation:"fadeUp .3s ease"}}>
-    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:28}}>
-      <span style={{fontSize:13,fontWeight:500,color:annual?N.textSec:N.text}}>Mensuel</span>
-      <div onClick={()=>setAnnual(!annual)} style={{width:44,height:24,borderRadius:12,
-        background:annual?N.violet:N.outline,cursor:"pointer",position:"relative",transition:"background .2s"}}>
-        <div style={{width:20,height:20,borderRadius:"50%",background:"#fff",
-          position:"absolute",top:2,left:annual?22:2,transition:"left .2s"}}/>
-      </div>
-      <span style={{fontSize:13,fontWeight:500,color:annual?N.text:N.textSec}}>
-        Annuel <span style={{background:"#d1fae5",color:"#059669",padding:"1px 8px",borderRadius:20,fontSize:11,fontWeight:600,marginLeft:4}}>-20%</span>
-      </span>
-    </div>
-    <div className="plans-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16,maxWidth:860,margin:"0 auto"}}>
-      {plans.map(p=>(
-        <div key={p.id} style={{background:N.white,borderRadius:14,padding:"24px",
-          border:p.featured?`2px solid ${N.violet}`:`1px solid ${N.outline}`,
-          position:"relative",boxShadow:p.featured?"0 8px 32px rgba(113,42,226,.15)":"0 2px 8px rgba(1,17,99,.06)"}}>
-          {p.featured&&<div style={{position:"absolute",top:-13,left:"50%",transform:"translateX(-50%)",
-            background:N.violet,color:"#fff",padding:"3px 16px",borderRadius:20,fontSize:11,fontWeight:600,
-            whiteSpace:"nowrap"}}>✦ Le plus populaire</div>}
-          <div style={{fontSize:11,color:p.color,fontWeight:600,marginBottom:6,textTransform:"uppercase",letterSpacing:"0.08em"}}>{p.name}</div>
-          <div style={{display:"flex",alignItems:"baseline",gap:2,marginBottom:2}}>
-            <span style={{fontSize:32,fontWeight:800,letterSpacing:"-0.5px"}}>{annual?p.priceY:p.price}€</span>
-            <span style={{fontSize:12,color:N.textSec}}>/mois</span>
-          </div>
-          <div style={{fontSize:12,color:N.textSec,marginBottom:16}}>{p.desc}</div>
-          <div style={{borderTop:`1px solid ${N.surface}`,paddingTop:14,marginBottom:18}}>
-            {p.features.map(f=>(
-              <div key={f} style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:8,fontSize:13}}>
-                <span className="material-symbols-outlined" style={{color:"#059669",fontSize:16,marginTop:1,flexShrink:0}}>check_circle</span>
-                {f}
-              </div>
-            ))}
-          </div>
-          <button style={{width:"100%",padding:"11px",borderRadius:8,cursor:"pointer",
-            fontSize:13,fontWeight:600,fontFamily:"inherit",border:"none",
-            background:p.featured?N.violet:p.id==="business"?N.navy:"#f1f5ff",
-            color:p.featured||p.id==="business"?"#fff":N.text}}>
-            {p.cta}
-          </button>
-        </div>
-      ))}
-    </div>
-  </div>;
-}
-
 /* ─── ROOT ─────────────────────────────── */
 export default function DevisFlowApp(){
   const [user,setUser]=useState(null);
