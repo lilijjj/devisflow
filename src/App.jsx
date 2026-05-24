@@ -114,11 +114,427 @@ function Input({label,type="text",value,onChange,placeholder,error,icon,autoFocu
   </div>;
 }
 
+
+/* ═══════════════════════════════════════════
+   LANDING PAGE
+═══════════════════════════════════════════ */
+function LandingPage({onGetStarted, onLogin}){
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(()=>{
+    const fn = ()=>setScrolled(window.scrollY>50);
+    window.addEventListener("scroll",fn);
+    return ()=>window.removeEventListener("scroll",fn);
+  },[]);
+
+  const FEATURES = [
+    {
+      icon:"auto_awesome", bg:"#1e2b78", color:"#8a96e9",
+      title:"Génération de Devis IA",
+      desc:"Créez des devis complexes en quelques secondes. Notre IA analyse vos anciens contrats pour suggérer les meilleurs tarifs et services.",
+      highlight:null
+    },
+    {
+      icon:"schedule_send", bg:"#712ae2", color:"#fff",
+      title:"Relances Automatisées",
+      desc:"Ne perdez plus de temps à courir après les paiements. ",
+      highlight:"+24% de trésorerie",
+      desc2:" constatée chez nos clients grâce à nos scénarios intelligents."
+    },
+    {
+      icon:"query_stats", bg:"#003b34", color:"#3cddc7",
+      title:"Suivi Live 360°",
+      desc:"Visualisez en temps réel qui a ouvert vos devis, validé vos factures et effectué les virements bancaires.",
+      highlight:null
+    },
+  ];
+
+  const AI_FEATURES = [
+    {title:"Analyse Prédictive des Risques", desc:"Identifiez les clients à risque de retard de paiement avant même d'envoyer la facture."},
+    {title:"Extraction de Données Automatique", desc:"Importez vos anciens documents PDF et laissez l'IA remplir votre catalogue de produits."},
+    {title:"Synchronisation Bancaire Native", desc:"Le lettrage automatique rapproche vos paiements reçus de vos factures émises sans erreur."},
+  ];
+
+  return(
+    <div style={{fontFamily:"'Hanken Grotesk',sans-serif",color:"#0b1c30",overflowX:"hidden",background:"#f8f9ff"}}>
+
+      {/* ── TOP NAV ── */}
+      <header style={{
+        position:"fixed",top:0,left:0,right:0,zIndex:50,
+        background:scrolled?"rgba(248,249,255,.92)":"#f8f9ff",
+        backdropFilter:scrolled?"blur(12px)":"none",
+        borderBottom:"1px solid #c6c5d3",
+        transition:"all .3s",boxShadow:scrolled?"0 1px 12px rgba(1,17,99,.06)":"none"
+      }}>
+        <nav style={{maxWidth:1200,margin:"0 auto",padding:"0 20px",
+          display:"flex",justifyContent:"space-between",alignItems:"center",height:64}}>
+          <div style={{display:"flex",alignItems:"center",gap:40}}>
+            <span style={{fontSize:22,fontWeight:700,color:"#011163",letterSpacing:"-0.3px"}}>DevisFlow</span>
+            <div style={{display:"flex",gap:28}}>
+              {["Features","Pricing","Testimonials"].map((item,i)=>(
+                <a key={item} href="#" style={{
+                  fontSize:15,color:i===0?"#011163":"#454651",
+                  textDecoration:"none",fontWeight:i===0?600:400,
+                  borderBottom:i===0?"2px solid #011163":"2px solid transparent",
+                  paddingBottom:2,transition:"color .15s"
+                }}>{item}</a>
+              ))}
+            </div>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <button onClick={onLogin} style={{background:"none",border:"none",cursor:"pointer",
+              fontFamily:"inherit",fontSize:15,fontWeight:600,color:"#454651",padding:"8px 16px"}}>
+              Login
+            </button>
+            <button onClick={onGetStarted} style={{
+              background:"#011163",color:"#fff",border:"none",borderRadius:10,
+              padding:"10px 22px",fontSize:14,fontWeight:700,cursor:"pointer",
+              fontFamily:"inherit",boxShadow:"0 4px 14px rgba(1,17,99,.25)",
+              transition:"all .2s"
+            }}
+            onMouseEnter={e=>{e.currentTarget.style.background="#1e2b78";e.currentTarget.style.transform="translateY(-1px)";}}
+            onMouseLeave={e=>{e.currentTarget.style.background="#011163";e.currentTarget.style.transform="translateY(0)";}}>
+              Get Started
+            </button>
+          </div>
+        </nav>
+      </header>
+
+      {/* ── HERO ── */}
+      <section style={{
+        background:"linear-gradient(160deg, #011163 0%, #1e2b78 60%, #2d3a8c 100%)",
+        clipPath:"polygon(0 0, 100% 0, 100% 90%, 0% 100%)",
+        padding:"140px 20px 120px",minHeight:520,
+        position:"relative",overflow:"hidden"
+      }}>
+        {/* Decorative circles */}
+        <div style={{position:"absolute",top:-100,right:-100,width:400,height:400,
+          borderRadius:"50%",background:"rgba(113,42,226,.15)",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",bottom:-50,left:-50,width:300,height:300,
+          borderRadius:"50%",background:"rgba(62,221,199,.08)",pointerEvents:"none"}}/>
+
+        <div style={{maxWidth:1200,margin:"0 auto",display:"grid",
+          gridTemplateColumns:"1fr 1fr",gap:60,alignItems:"center",position:"relative",zIndex:1}}>
+
+          {/* Left */}
+          <div>
+            <h1 style={{fontSize:44,fontWeight:800,color:"#fff",margin:"0 0 8px",
+              lineHeight:1.15,letterSpacing:"-0.02em"}}>
+              Facturez plus vite.<br/>
+              Relancez sans effort.<br/>
+              <span style={{color:"#3cddc7"}}>Encaissez davantage.</span>
+            </h1>
+            <p style={{fontSize:16,color:"rgba(255,255,255,.75)",lineHeight:1.65,
+              margin:"20px 0 36px",maxWidth:440}}>
+              L'outil de facturation nouvelle génération qui automatise vos processus financiers avec l'intelligence artificielle pour booster votre trésorerie de +24%.
+            </p>
+            <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
+              <button onClick={onGetStarted} style={{
+                background:"linear-gradient(135deg,#62fae3,#3cddc7)",
+                color:"#003b34",border:"none",borderRadius:12,
+                padding:"14px 28px",fontSize:15,fontWeight:700,cursor:"pointer",
+                fontFamily:"inherit",boxShadow:"0 4px 20px rgba(62,221,199,.4)",
+                transition:"all .2s"
+              }}
+              onMouseEnter={e=>e.currentTarget.style.transform="scale(1.04)"}
+              onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
+                Essayer gratuitement
+              </button>
+              <button style={{
+                background:"rgba(255,255,255,.1)",color:"#fff",
+                border:"1px solid rgba(255,255,255,.25)",borderRadius:12,
+                padding:"14px 24px",fontSize:15,fontWeight:500,cursor:"pointer",
+                fontFamily:"inherit",backdropFilter:"blur(8px)",
+                display:"flex",alignItems:"center",gap:8,transition:"all .2s"
+              }}
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.18)"}
+              onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,.1)"}>
+                <span className="material-symbols-outlined" style={{fontSize:18}}>play_circle</span>
+                Voir la démo
+              </button>
+            </div>
+          </div>
+
+          {/* Right — Mock dashboard */}
+          <div style={{position:"relative"}}>
+            <div style={{
+              background:"rgba(255,255,255,.05)",borderRadius:16,
+              border:"1px solid rgba(255,255,255,.12)",padding:20,
+              backdropFilter:"blur(8px)",overflow:"hidden"
+            }}>
+              {/* Mock UI inside */}
+              <div style={{background:"rgba(255,255,255,.08)",borderRadius:10,padding:"12px 16px",marginBottom:10,
+                display:"flex",alignItems:"center",gap:12}}>
+                <div style={{width:8,height:8,borderRadius:"50%",background:"#3cddc7"}}/>
+                <div style={{height:8,width:120,background:"rgba(255,255,255,.2)",borderRadius:4}}/>
+                <div style={{marginLeft:"auto",height:8,width:60,background:"rgba(62,221,199,.3)",borderRadius:4}}/>
+              </div>
+              {/* Fake chart */}
+              <div style={{background:"rgba(255,255,255,.04)",borderRadius:10,padding:"16px",marginBottom:10}}>
+                <div style={{display:"flex",alignItems:"flex-end",gap:6,height:80}}>
+                  {[40,55,45,70,60,85,75,95,88].map((h,i)=>(
+                    <div key={i} style={{flex:1,borderRadius:"3px 3px 0 0",
+                      background:i===8?"#3cddc7":"rgba(255,255,255,.2)",
+                      height:`${h}%`,transition:"height .3s"}}/>
+                  ))}
+                </div>
+              </div>
+              {/* Fake rows */}
+              {[["Agence Lumino","2 400 €","signé"],["TechStart SAS","4 200 €","envoyé"],["Studio Craft","850 €","relancé"]].map(([c,m,s],i)=>(
+                <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+                  padding:"8px 12px",background:"rgba(255,255,255,.06)",borderRadius:8,marginBottom:6}}>
+                  <span style={{fontSize:12,color:"rgba(255,255,255,.8)",fontWeight:500}}>{c}</span>
+                  <span style={{fontSize:12,color:"#fff",fontWeight:700}}>{m}</span>
+                  <span style={{fontSize:10,padding:"2px 8px",borderRadius:20,fontWeight:600,
+                    background:s==="signé"?"rgba(62,221,199,.2)":s==="envoyé"?"rgba(113,42,226,.3)":"rgba(255,255,255,.1)",
+                    color:s==="signé"?"#3cddc7":s==="envoyé"?"#d2bbff":"rgba(255,255,255,.7)"}}>{s}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SOCIAL PROOF ── */}
+      <section style={{padding:"40px 20px",borderBottom:"1px solid #c6c5d3"}}>
+        <div style={{maxWidth:1200,margin:"0 auto",display:"flex",
+          justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:20}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            {[1,2,3,4,5].map(i=>(
+              <span key={i} className="material-symbols-outlined" style={{color:"#f59e0b",fontSize:20,
+                fontVariationSettings:"'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24"}}>star</span>
+            ))}
+            <span style={{fontSize:14,fontWeight:600,color:"#454651",marginLeft:4}}>Noté 4,8/5 sur Trustpilot</span>
+          </div>
+          <div style={{display:"flex",gap:32}}>
+            {["LOGO_A","LOGO_B","LOGO_C","LOGO_D"].map(l=>(
+              <span key={l} style={{fontSize:13,fontWeight:600,color:"#c6c5d3",letterSpacing:"0.08em"}}>{l}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIAL ── */}
+      <section style={{padding:"60px 20px",background:"#fff"}}>
+        <div style={{maxWidth:700,margin:"0 auto"}}>
+          <div style={{background:"#f8f9ff",borderRadius:16,padding:"32px",
+            border:"1px solid #c6c5d3",boxShadow:"0 2px 16px rgba(1,17,99,.05)"}}>
+            <p style={{fontSize:16,lineHeight:1.7,color:"#0b1c30",margin:"0 0 20px",fontStyle:"italic"}}>
+              "Depuis que nous utilisons DevisFlow, le temps consacré à la facturation a été divisé par trois. Les relances automatiques par IA sont d'une efficacité redoutable, nos clients paient beaucoup plus rapidement."
+            </p>
+            <div style={{display:"flex",alignItems:"center",gap:14}}>
+              <div style={{width:48,height:48,borderRadius:"50%",background:"#1e2b78",
+                display:"flex",alignItems:"center",justifyContent:"center",
+                color:"#fff",fontWeight:700,fontSize:16,flexShrink:0}}>AL</div>
+              <div>
+                <div style={{fontWeight:700,fontSize:15}}>Arnaud Leblanc</div>
+                <div style={{fontSize:13,color:"#767682"}}>CEO, Leblanc & Associés</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FEATURES ── */}
+      <section style={{padding:"80px 20px",background:"#f8f9ff"}}>
+        <div style={{maxWidth:1200,margin:"0 auto"}}>
+          <div style={{textAlign:"center",marginBottom:56}}>
+            <h2 style={{fontSize:32,fontWeight:700,color:"#011163",margin:"0 0 12px",letterSpacing:"-0.3px"}}>
+              L'efficacité au cœur de votre entreprise
+            </h2>
+            <p style={{fontSize:16,color:"#454651",margin:0}}>
+              Optimisez chaque étape de votre cycle de vente grâce à nos outils intelligents et intuitifs.
+            </p>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:24}}>
+            {FEATURES.map((f,i)=>(
+              <div key={i}
+                style={{background:"#fff",borderRadius:16,padding:32,
+                  border:"1px solid rgba(198,197,211,.3)",
+                  boxShadow:"0 2px 8px rgba(1,17,99,.04)",transition:"all .3s",cursor:"default"}}
+                onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-8px)";e.currentTarget.style.boxShadow="0 12px 32px rgba(1,17,99,.1)";}}
+                onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="0 2px 8px rgba(1,17,99,.04)";}}>
+                <div style={{width:48,height:48,background:f.bg,borderRadius:12,
+                  display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20,
+                  transition:"transform .3s"}}>
+                  <span className="material-symbols-outlined" style={{fontSize:24,color:f.color}}>{f.icon}</span>
+                </div>
+                <h3 style={{fontSize:20,fontWeight:600,color:"#011163",margin:"0 0 12px"}}>{f.title}</h3>
+                <p style={{fontSize:15,color:"#454651",lineHeight:1.65,margin:0}}>
+                  {f.desc}
+                  {f.highlight&&<><strong style={{color:"#712ae2"}}>{f.highlight}</strong>{f.desc2}</>}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── AI SECTION ── */}
+      <section style={{padding:"80px 20px",background:"#fff"}}>
+        <div style={{maxWidth:1200,margin:"0 auto",display:"grid",
+          gridTemplateColumns:"1fr 1fr",gap:80,alignItems:"center"}}>
+          <div>
+            <h2 style={{fontSize:32,fontWeight:700,color:"#011163",margin:"0 0 32px",
+              letterSpacing:"-0.3px",lineHeight:1.2}}>
+              L'intelligence artificielle<br/>au service de votre sérénité
+            </h2>
+            <div style={{display:"flex",flexDirection:"column",gap:20}}>
+              {AI_FEATURES.map((f,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"flex-start",gap:14}}>
+                  <div style={{width:24,height:24,borderRadius:"50%",background:"#8a4cfc",
+                    display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:2}}>
+                    <span className="material-symbols-outlined" style={{fontSize:14,color:"#fff",
+                      fontVariationSettings:"'FILL' 1,'wght' 600,'GRAD' 0,'opsz' 24"}}>check</span>
+                  </div>
+                  <div>
+                    <h4 style={{fontWeight:700,fontSize:15,color:"#011163",margin:"0 0 4px"}}>{f.title}</h4>
+                    <p style={{fontSize:14,color:"#454651",margin:0,lineHeight:1.6}}>{f.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Mock dashboard image */}
+          <div style={{position:"relative"}}>
+            <div style={{
+              borderRadius:16,padding:16,background:"#0d1f3c",
+              boxShadow:"0 0 25px rgba(113,42,226,.15)",border:"1px solid rgba(113,42,226,.2)"
+            }}>
+              {/* Mock dark dashboard */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+                {[["Total CA","124 500 €","#3cddc7"],["En attente","32 120 €","#bbc3ff"]].map(([l,v,c])=>(
+                  <div key={l} style={{background:"rgba(255,255,255,.06)",borderRadius:8,padding:"12px"}}>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,.5)",marginBottom:4,fontWeight:600}}>{l}</div>
+                    <div style={{fontSize:18,fontWeight:700,color:c}}>{v}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Chart area */}
+              <div style={{background:"rgba(255,255,255,.04)",borderRadius:10,padding:"16px 12px",marginBottom:10}}>
+                <div style={{fontSize:11,color:"rgba(255,255,255,.5)",marginBottom:10,fontWeight:600}}>REVENUE EVOLUTION</div>
+                <svg width="100%" viewBox="0 0 300 80" style={{overflow:"visible"}}>
+                  <defs>
+                    <linearGradient id="lg2" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3cddc7" stopOpacity="0.3"/>
+                      <stop offset="100%" stopColor="#3cddc7" stopOpacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M0,65 L33,58 L66,50 L99,38 L132,45 L165,28 L198,32 L231,18 L265,15 L300,8"
+                    fill="none" stroke="#3cddc7" strokeWidth="2.5" strokeLinejoin="round"/>
+                  <path d="M0,65 L33,58 L66,50 L99,38 L132,45 L165,28 L198,32 L231,18 L265,15 L300,8 L300,80 L0,80 Z"
+                    fill="url(#lg2)"/>
+                  {[[0,65],[99,38],[165,28],[300,8]].map(([x,y],i)=>(
+                    <circle key={i} cx={x} cy={y} r="3" fill="#3cddc7"/>
+                  ))}
+                </svg>
+              </div>
+              <div style={{display:"flex",justifyContent:"flex-end"}}>
+                <div style={{background:"rgba(255,255,255,.08)",borderRadius:20,padding:"5px 12px",
+                  display:"flex",alignItems:"center",gap:6}}>
+                  <span className="material-symbols-outlined" style={{fontSize:14,color:"#712ae2"}}>bolt</span>
+                  <span style={{fontSize:10,fontWeight:600,color:"#712ae2",letterSpacing:"0.08em",fontFamily:"'JetBrains Mono',monospace"}}>IA ACTIVE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ── */}
+      <section style={{padding:"80px 20px"}}>
+        <div style={{maxWidth:900,margin:"0 auto"}}>
+          <div style={{background:"#1e2b78",borderRadius:20,padding:"56px 48px",
+            textAlign:"center",position:"relative",overflow:"hidden"}}>
+            {/* Grid texture */}
+            <div style={{position:"absolute",inset:0,opacity:0.05,pointerEvents:"none",
+              backgroundImage:"linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)",
+              backgroundSize:"30px 30px"}}/>
+            <h2 style={{fontSize:34,fontWeight:700,color:"#8a96e9",margin:"0 0 14px",
+              letterSpacing:"-0.3px",position:"relative",zIndex:1}}>
+              Prêt à transformer votre facturation ?
+            </h2>
+            <p style={{fontSize:16,color:"rgba(138,150,233,.8)",margin:"0 0 36px",
+              maxWidth:500,marginLeft:"auto",marginRight:"auto",lineHeight:1.6,
+              position:"relative",zIndex:1}}>
+              Rejoignez plus de 5,000 entreprises qui automatisent leur croissance avec DevisFlow. Aucun frais caché, résiliation possible à tout moment.
+            </p>
+            <div style={{position:"relative",zIndex:1}}>
+              <button onClick={onGetStarted} style={{
+                background:"linear-gradient(135deg,#62fae3,#3cddc7)",
+                color:"#003b34",border:"none",borderRadius:12,
+                padding:"16px 40px",fontSize:17,fontWeight:700,cursor:"pointer",
+                fontFamily:"inherit",boxShadow:"0 8px 28px rgba(62,221,199,.35)",
+                transition:"all .2s"
+              }}
+              onMouseEnter={e=>{e.currentTarget.style.transform="scale(1.05)";}}
+              onMouseLeave={e=>{e.currentTarget.style.transform="scale(1)";}}>
+                Créer un compte gratuit
+              </button>
+              <p style={{marginTop:12,fontSize:13,color:"rgba(138,150,233,.6)"}}>
+                Essai gratuit de 14 jours • Pas de carte bancaire requise
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer style={{background:"#011163",padding:"40px 20px"}}>
+        <div style={{maxWidth:1200,margin:"0 auto",display:"flex",
+          justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:20}}>
+          <div>
+            <div style={{fontSize:20,fontWeight:700,color:"#fff",marginBottom:4}}>DevisFlow</div>
+            <div style={{fontSize:13,color:"rgba(138,150,233,.7)"}}>© 2024 DevisFlow AI. All rights reserved.</div>
+          </div>
+          <div style={{display:"flex",gap:24,flexWrap:"wrap"}}>
+            {["Privacy Policy","Terms of Service","Contact Us","Documentation"].map(l=>(
+              <a key={l} href="#" style={{fontSize:13,color:"rgba(138,150,233,.8)",textDecoration:"none",
+                transition:"color .15s"}}
+                onMouseEnter={e=>e.currentTarget.style.color="#3cddc7"}
+                onMouseLeave={e=>e.currentTarget.style.color="rgba(138,150,233,.8)"}>{l}</a>
+            ))}
+          </div>
+          <div style={{display:"flex",gap:10}}>
+            {["share","language"].map(icon=>(
+              <button key={icon} style={{width:40,height:40,borderRadius:"50%",
+                background:"rgba(138,150,233,.1)",border:"none",cursor:"pointer",
+                display:"flex",alignItems:"center",justifyContent:"center",
+                color:"#fff",transition:"all .2s"}}
+                onMouseEnter={e=>{e.currentTarget.style.background="#3cddc7";e.currentTarget.style.color="#003b34";}}
+                onMouseLeave={e=>{e.currentTarget.style.background="rgba(138,150,233,.1)";e.currentTarget.style.color="#fff";}}>
+                <span className="material-symbols-outlined" style={{fontSize:18}}>{icon}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </footer>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+        .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-family:'Material Symbols Outlined';vertical-align:middle;}
+        *{box-sizing:border-box}
+        html{scroll-behavior:smooth}
+        @media(max-width:768px){
+          .hero-grid{grid-template-columns:1fr !important;}
+          .hero-mock{display:none !important;}
+          .features-grid{grid-template-columns:1fr !important;}
+          .ai-grid{grid-template-columns:1fr !important;}
+          .nav-links{display:none !important;}
+          .cta-section{padding:40px 24px !important;}
+          .footer-inner{flex-direction:column !important;text-align:center !important;}
+        }
+      `}</style>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════
    AUTH PAGE
 ═══════════════════════════════════════════ */
-function AuthPage({onLogin}){
-  const [mode,setMode]=useState("login");
+function AuthPage({onLogin, initialMode="login", onBack}){
+  const [mode,setMode]=useState(initialMode);
   const [email,setEmail]=useState("");
   const [pass,setPass]=useState("");
   const [name,setName]=useState("");
@@ -2408,6 +2824,20 @@ function Tarifs({user}){
 /* ─── ROOT ─────────────────────────────── */
 export default function DevisFlowApp(){
   const [user,setUser]=useState(null);
-  if(!user) return <AuthPage onLogin={setUser}/>;
-  return <AppShell user={user} onLogout={()=>setUser(null)}/>;
+  const [screen,setScreen]=useState("landing"); // "landing" | "login" | "signup" | "app"
+
+  if(user) return <AppShell user={user} onLogout={()=>{setUser(null);setScreen("landing");}}/>;
+
+  if(screen==="landing") return (
+    <LandingPage
+      onGetStarted={()=>setScreen("signup")}
+      onLogin={()=>setScreen("login")}
+    />
+  );
+
+  return <AuthPage
+    initialMode={screen}
+    onLogin={u=>{setUser(u);setScreen("app");}}
+    onBack={()=>setScreen("landing")}
+  />;
 }
